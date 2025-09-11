@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ozvol_customer/presentation/auth/login.dart';
 import 'package:ozvol_customer/utils/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class CustomerHomePage extends StatelessWidget {
   final Map<String, dynamic> userData;
@@ -55,7 +56,7 @@ class CustomerHomePage extends StatelessWidget {
             SizedBox(height: 20),
             GestureDetector(
               onTap: () async {
-              logout(userData['name'], context);
+                logout(userData['name'], context);
               },
               child: Icon(Icons.logout, color: Colors.white, size: 35),
             ),
@@ -97,6 +98,12 @@ class CustomerHomePage extends StatelessWidget {
 
               // Displaying only the first stock as example
               var stock = stocks[0].data() as Map<String, dynamic>;
+              Timestamp? timestamp = stock['statusUpdatedAt'] as Timestamp?;
+              String formattedDate = timestamp != null
+                  ? DateFormat(
+                      'dd MMM yyyy, hh:mm a',
+                    ).format(timestamp.toDate())
+                  : "N/A";
 
               return Container(
                 margin: EdgeInsets.only(left: 20, right: 20),
@@ -113,7 +120,7 @@ class CustomerHomePage extends StatelessWidget {
                     Text(
                       stock['stockName'] ?? 'Stock Name',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -122,7 +129,11 @@ class CustomerHomePage extends StatelessWidget {
                       children: [
                         Text(
                           'Status: ',
-                          style: TextStyle(fontSize: 18, color: Colors.black),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           stock['action'] ?? '-',
@@ -145,6 +156,23 @@ class CustomerHomePage extends StatelessWidget {
                         ),
                       ],
                     ),
+                    Row(
+                      children: [
+                        Text(
+                          'Time: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        Text(
+                          formattedDate,
+                          style: TextStyle(color: Colors.grey.shade400),
+                        ),
+                      ],
+                    ),
 
                     SizedBox(height: 4),
                     // Text(
@@ -152,24 +180,153 @@ class CustomerHomePage extends StatelessWidget {
                     //   style: TextStyle(fontSize: 18),
                     // ),
                     SizedBox(height: 10),
-                    Text(
-                      'SL:  ${stock['sl'] ?? '-'}',
-                      style: TextStyle(fontSize: 18),
+                  ],
+                ),
+              );
+            },
+          ),
+          SizedBox(height: 10),
+          //2nd stream
+          StreamBuilder<QuerySnapshot>(
+            stream: stocksRef.snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData)
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(color: kseccolor),
+                );
+
+              final stocks = snapshot.data!.docs;
+              if (stocks.isEmpty)
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text("No stocks available"),
+                );
+
+              // Displaying only the first stock as example
+              var stock = stocks[0].data() as Map<String, dynamic>;
+              Timestamp? timestamp = stock['targetsUpdatedAt'] as Timestamp?;
+              String formattedDate = timestamp != null
+                  ? DateFormat(
+                      'dd MMM yyyy, hh:mm a',
+                    ).format(timestamp.toDate())
+                  : "N/A";
+
+              return Container(
+                margin: EdgeInsets.only(left: 20, right: 20),
+                decoration: BoxDecoration(
+                  color: kseccolor.withOpacity(.5),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                width: double.infinity,
+
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 4),
+                    // Text(
+                    //   'Price: \$${stock['price'] ?? '-'}',
+                    //   style: TextStyle(fontSize: 18),
+                    // ),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SL: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${stock['sl'] ?? '-'}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TGT 1: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${stock['tgt1'] ?? '-'}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 10),
-                    Text(
-                      'TGT 1: ${stock['tgt1'] ?? '-'}',
-                      style: TextStyle(fontSize: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TGT 2: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${stock['tgt2'] ?? '-'}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 10),
-                    Text(
-                      'TGT 2: ${stock['tgt2'] ?? '-'}',
-                      style: TextStyle(fontSize: 18),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TGT 3: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${stock['tgt3'] ?? '-'}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      'TGT 3: ${stock['tgt3'] ?? '-'}',
-                      style: TextStyle(fontSize: 18),
+
+                    Row(
+                      children: [
+                        Text(
+                          'Time: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        Text(
+                          formattedDate,
+                          style: TextStyle(color: Colors.grey.shade400),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -221,9 +378,7 @@ class CustomerHomePage extends StatelessWidget {
     );
   }
 
-
-
-  //logout  
+  //logout
 
   Future<void> logout(String email, BuildContext context) async {
     final query = await FirebaseFirestore.instance
@@ -243,5 +398,4 @@ class CustomerHomePage extends StatelessWidget {
       MaterialPageRoute(builder: (_) => CustomerLoginPage()),
     );
   }
-
 }

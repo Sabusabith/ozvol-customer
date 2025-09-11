@@ -17,6 +17,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
   );
 
   bool loading = false;
+  Stream<DocumentSnapshot>? userStream; // 👈 will store listener
 
   @override
   void initState() {
@@ -24,12 +25,43 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
     checkLoggedInUser();
   }
 
+  /// Attach a Firestore listener to auto logout if admin deactivates account
+  void attachUserListener(String docId) {
+    userStream = authRef.doc(docId).snapshots();
+    userStream!.listen((snapshot) async {
+      if (snapshot.exists) {
+        final userData = snapshot.data() as Map<String, dynamic>;
+        if (userData['active'] == false || userData['isLoggedIn'] == false) {
+          // 👈 Logout immediately
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => CustomerLoginPage()),
+              (route) => false,
+            );
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Your account has been deactivated by admin."),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+    });
+  }
+
   /// Check if user is already logged in on this device
   void checkLoggedInUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? email = prefs.getString('email');
+    String? docId = prefs.getString('docId');
 
-    if (email != null) {
+    if (email != null && docId != null) {
       final query = await authRef.where('name', isEqualTo: email).get();
 
       if (query.docs.isNotEmpty) {
@@ -37,6 +69,9 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
         final userData = userDoc.data() as Map<String, dynamic>;
 
         if (userData['active'] == true && userData['isLoggedIn'] == true) {
+          // ✅ Attach listener
+          attachUserListener(userDoc.id);
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -86,6 +121,10 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
           // Save user locally
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('email', email);
+          await prefs.setString('docId', userDoc.id);
+
+          // ✅ Attach listener
+          attachUserListener(userDoc.id);
 
           Navigator.pushReplacement(
             context,

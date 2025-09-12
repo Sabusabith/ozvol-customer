@@ -1,49 +1,65 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:get/get.dart';
 import 'package:ozvol_customer/presentation/auth/login.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> setupFCM() async {
+  await FirebaseMessaging.instance.requestPermission();
+  await FirebaseMessaging.instance.subscribeToTopic("allCustomers");
+
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    print(
+      "📩 Foreground: ${message.notification?.title} - ${message.notification?.body}",
+    );
+
+    if (message.notification != null) {
+      // Show local notification
+      const AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+            'default_channel', // id
+            'General Notifications', // name
+            channelDescription:
+                'This channel is used for general notifications.',
+            importance: Importance.max,
+            priority: Priority.high,
+          );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+      );
+
+      await flutterLocalNotificationsPlugin.show(
+        0,
+        message.notification!.title,
+        message.notification!.body,
+        platformDetails,
+      );
+    }
+  });
+}
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  // Show notification when app is in background
-  showLocalNotification(message);
-}
+Future<void> setupLocalNotifications() async {
+  const AndroidInitializationSettings androidInit =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
-void showLocalNotification(RemoteMessage message) async {
-  const androidDetails = AndroidNotificationDetails(
-    'channelId',
-    'channelName',
-    channelDescription: 'Stock notifications',
-    importance: Importance.max,
-    priority: Priority.high,
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidInit,
   );
 
-  const platformDetails = NotificationDetails(android: androidDetails);
-
-  await flutterLocalNotificationsPlugin.show(
-    message.hashCode,
-    message.notification?.title ?? 'Stock Update',
-    message.notification?.body ?? '',
-    platformDetails,
-  );
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
 }
 
-void main() async {
+void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  // Initialize local notifications
-  const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  const initSettings = InitializationSettings(android: androidInit);
-  await flutterLocalNotificationsPlugin.initialize(initSettings);
+  await setupLocalNotifications(); // ✅ init local notifications
+  await setupFCM();
 
   runApp(const MyApp());
 }

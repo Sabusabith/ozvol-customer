@@ -1,42 +1,20 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ozvol_customer/main.dart';
 import 'package:ozvol_customer/presentation/auth/login.dart';
 import 'package:ozvol_customer/utils/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
-class CustomerHomePage extends StatefulWidget {
+class CustomerHomePage extends StatelessWidget {
   final Map<String, dynamic> userData;
   CustomerHomePage({required this.userData});
-
-  @override
-  State<CustomerHomePage> createState() => _CustomerHomePageState();
-}
-
-class _CustomerHomePageState extends State<CustomerHomePage> {
   final CollectionReference stocksRef = FirebaseFirestore.instance.collection(
     'stocks',
   );
-
   final CollectionReference usersRef = FirebaseFirestore.instance.collection(
     'customers',
   );
-  @override
-  void initState() {
-    super.initState();
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Foreground message received: ${message.notification?.body}');
-      showLocalNotification(message);
-    });
-
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      print('Notification clicked!');
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +40,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      widget.userData['name'],
+                      userData['name'],
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -78,7 +56,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
             SizedBox(height: 20),
             GestureDetector(
               onTap: () async {
-                logout(widget.userData['name'], context);
+                logout(userData['name'], context);
               },
               child: Icon(Icons.logout, color: Colors.white, size: 35),
             ),
@@ -93,7 +71,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
         ),
         backgroundColor: kprimerycolor,
         title: Text(
-          "Welcome, ${widget.userData['name'] ?? 'User'}",
+          "Welcome, ${userData['name'] ?? 'User'}",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -401,6 +379,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   }
 
   //logout
+
   Future<void> logout(String email, BuildContext context) async {
     final query = await FirebaseFirestore.instance
         .collection('customers')

@@ -29,6 +29,21 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   void initState() {
     super.initState();
     _requestNotificationPermission();
+    registerToken(widget.userData['docId']);
+  }
+
+  Future<void> registerToken(String userId) async {
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await FirebaseFirestore.instance
+          .collection('customers')
+          .doc(userId)
+          .update({
+            'fcmToken': token,
+            'isLoggedIn': true, // mark user as logged in
+          });
+      print("✅ FCM token registered for user $userId");
+    }
   }
 
   Future<void> _requestNotificationPermission() async {

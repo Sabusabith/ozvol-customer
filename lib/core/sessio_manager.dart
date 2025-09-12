@@ -66,7 +66,7 @@ class SessionManager {
               content: Text(
                 !active
                     ? "Your account has been deactivated by admin."
-                    : "You have been logged out (another device logged in).",
+                    : "You have been logged out.",
               ),
               backgroundColor: Colors.red,
             ),

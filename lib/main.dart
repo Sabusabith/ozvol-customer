@@ -76,6 +76,8 @@ Future<void> setupLocalNotifications() async {
   await flutterLocalNotificationsPlugin.initialize(initSettings);
 }
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -95,6 +97,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
+      navigatorKey: navigatorKey,
       home: CustomerLoginPage(),
       debugShowCheckedModeBanner: false,
     );

@@ -5,6 +5,8 @@ import 'package:ozvol_customer/utils/colors.dart';
 import 'package:ozvol_customer/presentation/home.dart';
 
 class CustomerLoginPage extends StatefulWidget {
+  const CustomerLoginPage({super.key});
+
   @override
   _CustomerLoginPageState createState() => _CustomerLoginPageState();
 }
@@ -35,12 +37,17 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
       if (docSnapshot.exists) {
         final userData = docSnapshot.data() as Map<String, dynamic>;
         if (userData['active'] == true && userData['isLoggedIn'] == true) {
-          _session.attachListener(context, docId);
+          _session.attachListener(docId);
 
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => CustomerHomePage(userData: userData),
+              builder: (_) => CustomerHomePage(
+                userData: {
+                  ...userData,
+                  'docId': docId, // pass docId for logout
+                },
+              ),
             ),
           );
         } else {
@@ -72,7 +79,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: Colors.red.withOpacity(.8),
-              content: Text(
+              content: const Text(
                 "This account is already logged in on another device",
               ),
             ),
@@ -81,27 +88,32 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
           // ✅ Mark as logged in
           await userDoc.reference.update({'isLoggedIn': true});
 
-          // Save session + attach listener
+          // Save session + attach global listener
           await _session.saveSession(email, userDoc.id);
-          _session.attachListener(context, userDoc.id);
+          _session.attachListener(userDoc.id);
 
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => CustomerHomePage(userData: userData),
+              builder: (_) => CustomerHomePage(
+                userData: {
+                  ...userData,
+                  'docId': userDoc.id, // pass docId
+                },
+              ),
             ),
           );
         }
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Your account is not active")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Your account is not active")),
+        );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red.withOpacity(.8),
-          content: Text("Invalid credentials"),
+          content: const Text("Invalid credentials"),
         ),
       );
     }
@@ -118,7 +130,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               "Customer Login",
               style: TextStyle(
                 fontSize: 21,
@@ -126,9 +138,9 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
               controller: emailController,
               decoration: InputDecoration(
                 hintText: "Name",
@@ -136,15 +148,15 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   vertical: 14,
                   horizontal: 12,
                 ),
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             TextField(
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
               controller: passwordController,
               obscureText: true,
               decoration: InputDecoration(
@@ -153,13 +165,13 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   vertical: 14,
                   horizontal: 12,
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             loading
                 ? CircularProgressIndicator(color: kseccolor)
                 : ElevatedButton(
@@ -170,7 +182,10 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                       ),
                     ),
                     onPressed: _login,
-                    child: Text("Login", style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      "Login",
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
           ],
         ),

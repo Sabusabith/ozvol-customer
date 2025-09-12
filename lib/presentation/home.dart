@@ -90,9 +90,11 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
             SizedBox(height: 20),
             GestureDetector(
               onTap: () async {
-                final session = await SessionManager().getSession();
-                if (session['docId'] != null) {
-                  await SessionManager().logout(context, session['docId']!);
+                final sess = await SessionManager().getSession();
+                final docId = sess['docId'];
+                if (docId != null) {
+                  // Call the logout method from SessionManager
+                  await SessionManager().logout(docId, context);
                 }
               },
               child: Icon(Icons.logout, color: Colors.white, size: 35),
@@ -181,13 +183,13 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                             color:
                                 (stock['action'] == 'buy' ||
                                     stock['action'] == 'Buy')
-                                ? Colors.blue
+                                ? Colors.green
                                 : (stock['action'] == 'sell' ||
                                       stock['action'] == 'Sell')
-                                ? Colors.green
+                                ? Colors.red
                                 : (stock['action'] == 'exit' ||
                                       stock['action'] == 'Exit')
-                                ? Colors.red
+                                ? Colors.blue
                                 : Colors.black,
                             fontWeight: FontWeight.bold,
                             // optional to highlight
@@ -195,26 +197,26 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                         ),
                       ],
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
 
-                      children: [
-                        Text(
-                          'Time: ',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
 
-                        Text(
-                          formattedDate,
-                          style: TextStyle(color: Colors.grey.shade400),
-                        ),
-                      ],
-                    ),
+                    //   children: [
+                    //     Text(
+                    //       'Time: ',
+                    //       style: TextStyle(
+                    //         fontSize: 18,
+                    //         color: Colors.black,
+                    //         fontWeight: FontWeight.bold,
+                    //       ),
+                    //     ),
 
+                    //     Text(
+                    //       formattedDate,
+                    //       style: TextStyle(color: Colors.grey.shade400),
+                    //     ),
+                    //   ],
+                    // ),
                     SizedBox(height: 4),
                     // Text(
                     //   'Price: \$${stock['price'] ?? '-'}',
@@ -352,25 +354,25 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                       ],
                     ),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
 
-                      children: [
-                        Text(
-                          'Time: ',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                    //   children: [
+                    //     Text(
+                    //       'Time: ',
+                    //       style: TextStyle(
+                    //         fontSize: 18,
+                    //         color: Colors.black,
+                    //         fontWeight: FontWeight.bold,
+                    //       ),
+                    //     ),
 
-                        Text(
-                          formattedDate,
-                          style: TextStyle(color: Colors.grey.shade400),
-                        ),
-                      ],
-                    ),
+                    //     Text(
+                    //       formattedDate,
+                    //       style: TextStyle(color: Colors.grey.shade400),
+                    //     ),
+                    //   ],
+                    // ),
                   ],
                 ),
               );

@@ -5,17 +5,36 @@ import 'package:get/get.dart';
 import 'package:ozvol_customer/presentation/auth/login.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+// =======================
+// BACKGROUND HANDLER
+// =======================
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print(
+    "📩 Background: ${message.notification?.title} - ${message.notification?.body}",
+  );
+}
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 Future<void> setupFCM() async {
-  await FirebaseMessaging.instance.requestPermission();
+  // 🔹 Ask for notification permission once
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
   await FirebaseMessaging.instance.subscribeToTopic("allCustomers");
 
+  // 🔹 Foreground messages
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     print(
       "📩 Foreground: ${message.notification?.title} - ${message.notification?.body}",
     );
 
     if (message.notification != null) {
-      // Show local notification
       const AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
             'default_channel', // id
@@ -38,10 +57,13 @@ Future<void> setupFCM() async {
       );
     }
   });
-}
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+  // 🔹 When app opened from notification
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print("📩 Notification clicked: ${message.notification?.title}");
+    // TODO: Navigate to specific screen if needed
+  });
+}
 
 Future<void> setupLocalNotifications() async {
   const AndroidInitializationSettings androidInit =
@@ -58,7 +80,10 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  await setupLocalNotifications(); // ✅ init local notifications
+  // 🔹 Background handler must be registered before runApp
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  await setupLocalNotifications();
   await setupFCM();
 
   runApp(const MyApp());

@@ -152,7 +152,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
 
                 padding: EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       stock['stockName'] ?? 'Stock Name',
@@ -163,6 +163,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     ),
                     SizedBox(height: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+
                       children: [
                         Text(
                           'Status: ',
@@ -194,6 +196,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                       ],
                     ),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+
                       children: [
                         Text(
                           'Time: ',
@@ -259,7 +263,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
 
                 padding: EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(height: 4),
                     // Text(
@@ -268,7 +272,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     // ),
                     SizedBox(height: 10),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           'SL: ',
@@ -289,7 +293,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
 
                     SizedBox(height: 10),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           'TGT 1: ',
@@ -309,7 +313,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     ),
                     SizedBox(height: 10),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           'TGT 2: ',
@@ -329,7 +333,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     ),
                     SizedBox(height: 10),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           'TGT 3: ',
@@ -349,6 +353,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     ),
 
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+
                       children: [
                         Text(
                           'Time: ',

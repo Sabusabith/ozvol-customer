@@ -225,11 +225,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     //         fontWeight: FontWeight.bold,
                     //       ),
                     //     ),
-
-                    //     Text(
-                    //       formattedDate,
-                    //       style: TextStyle(color: Colors.grey.shade400),
-                    //     ),
+                    Text(
+                      formattedDate,
+                      style: TextStyle(color: Colors.grey.shade400),
+                    ),
                     //   ],
                     // ),
                     SizedBox(height: 4),
@@ -381,11 +380,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                     //         fontWeight: FontWeight.bold,
                     //       ),
                     //     ),
-
-                    //     Text(
-                    //       formattedDate,
-                    //       style: TextStyle(color: Colors.grey.shade400),
-                    //     ),
+                    Text(
+                      formattedDate,
+                      style: TextStyle(color: Colors.grey.shade400),
+                    ),
                     //   ],
                     // ),
                   ],

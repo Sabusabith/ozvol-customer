@@ -18,8 +18,17 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+/// Android channel with custom sound
+const AndroidNotificationChannel customChannel = AndroidNotificationChannel(
+  'default_channel', // same as FCM channel_id
+  'General Notifications',
+  description: 'This channel is used for general notifications.',
+  importance: Importance.max,
+  sound: RawResourceAndroidNotificationSound('alert_tone'), // without extension
+);
+
 Future<void> setupFCM() async {
-  // 🔹 Ask for notification permission once
+  // 🔹 Ask for notification permission
   await FirebaseMessaging.instance.requestPermission(
     alert: true,
     badge: true,
@@ -28,6 +37,13 @@ Future<void> setupFCM() async {
 
   await FirebaseMessaging.instance.subscribeToTopic("allCustomers");
 
+  // 🔹 Create Android channel with custom sound
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(customChannel);
+
   // 🔹 Foreground messages
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     print(
@@ -35,17 +51,17 @@ Future<void> setupFCM() async {
     );
 
     if (message.notification != null) {
-      const AndroidNotificationDetails androidDetails =
+      final AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
-            'default_channel', // id
-            'General Notifications', // name
-            channelDescription:
-                'This channel is used for general notifications.',
+            customChannel.id,
+            customChannel.name,
+            channelDescription: customChannel.description,
             importance: Importance.max,
             priority: Priority.high,
+            sound: customChannel.sound,
           );
 
-      const NotificationDetails platformDetails = NotificationDetails(
+      final NotificationDetails platformDetails = NotificationDetails(
         android: androidDetails,
       );
 
@@ -82,7 +98,7 @@ void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // 🔹 Background handler must be registered before runApp
+  // 🔹 Background handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await setupLocalNotifications();

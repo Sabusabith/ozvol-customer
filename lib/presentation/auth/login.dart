@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ozvol_customer/core/sessio_manager.dart';
 import 'package:ozvol_customer/utils/colors.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ozvol_customer/presentation/home.dart';
 
 class CustomerLoginPage extends StatefulWidget {
@@ -16,61 +16,26 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
     'customers',
   );
 
+  final SessionManager _session = SessionManager();
   bool loading = false;
-  Stream<DocumentSnapshot>? userStream; // 👈 will store listener
 
   @override
   void initState() {
     super.initState();
-    checkLoggedInUser();
+    _checkLoggedInUser();
   }
 
-  /// Attach a Firestore listener to auto logout if admin deactivates account
-  void attachUserListener(String docId) {
-    userStream = authRef.doc(docId).snapshots();
-    userStream!.listen((snapshot) async {
-      if (snapshot.exists) {
-        final userData = snapshot.data() as Map<String, dynamic>;
-        if (userData['active'] == false || userData['isLoggedIn'] == false) {
-          // 👈 Logout immediately
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.clear();
+  /// 🔹 Check session on app start
+  void _checkLoggedInUser() async {
+    final session = await _session.getSession();
+    final docId = session['docId'];
 
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (_) => CustomerLoginPage()),
-              (route) => false,
-            );
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Your account has been deactivated by admin."),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      }
-    });
-  }
-
-  /// Check if user is already logged in on this device
-  void checkLoggedInUser() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? email = prefs.getString('email');
-    String? docId = prefs.getString('docId');
-
-    if (email != null && docId != null) {
-      final query = await authRef.where('name', isEqualTo: email).get();
-
-      if (query.docs.isNotEmpty) {
-        final userDoc = query.docs.first;
-        final userData = userDoc.data() as Map<String, dynamic>;
-
+    if (docId != null) {
+      final docSnapshot = await authRef.doc(docId).get();
+      if (docSnapshot.exists) {
+        final userData = docSnapshot.data() as Map<String, dynamic>;
         if (userData['active'] == true && userData['isLoggedIn'] == true) {
-          // ✅ Attach listener
-          attachUserListener(userDoc.id);
+          _session.attachListener(context, docId);
 
           Navigator.pushReplacement(
             context,
@@ -79,17 +44,15 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
             ),
           );
         } else {
-          await prefs.clear();
+          await _session.clearSession();
         }
       }
     }
   }
 
-  /// Login method
-  void login() async {
-    setState(() {
-      loading = true;
-    });
+  /// 🔹 Login method
+  void _login() async {
+    setState(() => loading = true);
 
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
@@ -105,26 +68,22 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
 
       if (userData['active'] == true) {
         if (userData['isLoggedIn'] == true) {
-          // Already logged in on another device
+          // 🚫 Already logged in somewhere else
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              backgroundColor: Colors.red.withOpacity(.3),
+              backgroundColor: Colors.red.withOpacity(.8),
               content: Text(
                 "This account is already logged in on another device",
               ),
             ),
           );
         } else {
-          // Mark user as logged in
+          // ✅ Mark as logged in
           await userDoc.reference.update({'isLoggedIn': true});
 
-          // Save user locally
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          await prefs.setString('email', email);
-          await prefs.setString('docId', userDoc.id);
-
-          // ✅ Attach listener
-          attachUserListener(userDoc.id);
+          // Save session + attach listener
+          await _session.saveSession(email, userDoc.id);
+          _session.attachListener(context, userDoc.id);
 
           Navigator.pushReplacement(
             context,
@@ -141,15 +100,13 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: Colors.red.withOpacity(.3),
+          backgroundColor: Colors.red.withOpacity(.8),
           content: Text("Invalid credentials"),
         ),
       );
     }
 
-    setState(() {
-      loading = false;
-    });
+    setState(() => loading = false);
   }
 
   @override
@@ -179,7 +136,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
+                contentPadding: EdgeInsets.symmetric(
                   vertical: 14,
                   horizontal: 12,
                 ),
@@ -196,7 +153,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
+                contentPadding: EdgeInsets.symmetric(
                   vertical: 14,
                   horizontal: 12,
                 ),
@@ -212,7 +169,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    onPressed: login,
+                    onPressed: _login,
                     child: Text("Login", style: TextStyle(color: Colors.white)),
                   ),
           ],

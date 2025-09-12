@@ -1,20 +1,54 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ozvol_customer/core/sessio_manager.dart';
 import 'package:ozvol_customer/presentation/auth/login.dart';
 import 'package:ozvol_customer/utils/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
-class CustomerHomePage extends StatelessWidget {
+class CustomerHomePage extends StatefulWidget {
   final Map<String, dynamic> userData;
   CustomerHomePage({required this.userData});
+
+  @override
+  State<CustomerHomePage> createState() => _CustomerHomePageState();
+}
+
+class _CustomerHomePageState extends State<CustomerHomePage> {
   final CollectionReference stocksRef = FirebaseFirestore.instance.collection(
     'stocks',
   );
+
   final CollectionReference usersRef = FirebaseFirestore.instance.collection(
     'customers',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _requestNotificationPermission();
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      debugPrint("✅ Notification permission granted");
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      debugPrint("⚠️ Provisional notification permission granted");
+    } else {
+      debugPrint("❌ Notification permission denied");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +74,7 @@ class CustomerHomePage extends StatelessWidget {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      userData['name'],
+                      widget.userData['name'],
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -56,7 +90,10 @@ class CustomerHomePage extends StatelessWidget {
             SizedBox(height: 20),
             GestureDetector(
               onTap: () async {
-                logout(userData['name'], context);
+                final session = await SessionManager().getSession();
+                if (session['docId'] != null) {
+                  await SessionManager().logout(context, session['docId']!);
+                }
               },
               child: Icon(Icons.logout, color: Colors.white, size: 35),
             ),
@@ -71,7 +108,7 @@ class CustomerHomePage extends StatelessWidget {
         ),
         backgroundColor: kprimerycolor,
         title: Text(
-          "Welcome, ${userData['name'] ?? 'User'}",
+          "Welcome, ${widget.userData['name'] ?? 'User'}",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -379,7 +416,6 @@ class CustomerHomePage extends StatelessWidget {
   }
 
   //logout
-
   Future<void> logout(String email, BuildContext context) async {
     final query = await FirebaseFirestore.instance
         .collection('customers')

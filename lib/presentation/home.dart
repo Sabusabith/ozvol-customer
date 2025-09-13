@@ -108,7 +108,6 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                 final sess = await SessionManager().getSession();
                 final docId = sess['docId'];
                 if (docId != null) {
-                  // Call the logout method from SessionManager
                   await SessionManager().logout(docId, context);
                 }
               },
@@ -433,26 +432,6 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
           // ),
         ],
       ),
-    );
-  }
-
-  //logout
-  Future<void> logout(String email, BuildContext context) async {
-    final query = await FirebaseFirestore.instance
-        .collection('customers')
-        .where('name', isEqualTo: email)
-        .get();
-
-    if (query.docs.isNotEmpty) {
-      await query.docs.first.reference.update({'isLoggedIn': false});
-    }
-
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => CustomerLoginPage()),
     );
   }
 }

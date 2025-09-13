@@ -24,7 +24,6 @@ const AndroidNotificationChannel customChannel = AndroidNotificationChannel(
   'General Notifications',
   description: 'This channel is used for general notifications.',
   importance: Importance.max,
-  sound: RawResourceAndroidNotificationSound('alert_tone'), // without extension
 );
 
 Future<void> setupFCM() async {
@@ -58,7 +57,6 @@ Future<void> setupFCM() async {
             channelDescription: customChannel.description,
             importance: Importance.max,
             priority: Priority.high,
-            sound: customChannel.sound,
           );
 
       final NotificationDetails platformDetails = NotificationDetails(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:ozvol_customer/core/sessio_manager.dart';
 import 'package:ozvol_customer/utils/colors.dart';
 import 'package:ozvol_customer/presentation/home.dart';
@@ -38,16 +39,11 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
         final userData = docSnapshot.data() as Map<String, dynamic>;
         if (userData['active'] == true && userData['isLoggedIn'] == true) {
           _session.attachListener(docId);
-
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => CustomerHomePage(
-                userData: {
-                  ...userData,
-                  'docId': docId, // pass docId for logout
-                },
-              ),
+              builder: (_) =>
+                  CustomerHomePage(userData: {...userData, 'docId': docId}),
             ),
           );
         } else {
@@ -57,6 +53,26 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
     }
   }
 
+  /// 🔹 Save FCM Token after login
+  Future<void> _saveFcmToken(String docId) async {
+    try {
+      String? token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await authRef.doc(docId).update({'fcmToken': token});
+        print("✅ Token saved for $docId");
+      }
+
+      // 🔄 Keep listening for refresh
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        await authRef.doc(docId).update({'fcmToken': newToken});
+        print("🔄 Token refreshed for $docId");
+      });
+    } catch (e) {
+      print("⚠️ Error saving FCM token: $e");
+    }
+  }
+
+  /// 🔹 Login method
   /// 🔹 Login method
   void _login() async {
     setState(() => loading = true);
@@ -74,36 +90,31 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
       final userData = userDoc.data() as Map<String, dynamic>;
 
       if (userData['active'] == true) {
-        if (userData['isLoggedIn'] == true) {
-          // 🚫 Already logged in somewhere else
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.red.withOpacity(.8),
-              content: const Text(
-                "This account is already logged in on another device",
-              ),
-            ),
-          );
-        } else {
-          // ✅ Mark as logged in
-          await userDoc.reference.update({'isLoggedIn': true});
+        // ✅ Force logout other sessions first
+        await userDoc.reference.update({
+          'isLoggedIn': false,
+          'fcmToken': FieldValue.delete(), // remove old device token
+        });
 
-          // Save session + attach global listener
-          await _session.saveSession(email, userDoc.id);
-          _session.attachListener(userDoc.id);
+        // Small delay to ensure old device listener triggers
+        await Future.delayed(const Duration(milliseconds: 300));
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CustomerHomePage(
-                userData: {
-                  ...userData,
-                  'docId': userDoc.id, // pass docId
-                },
-              ),
-            ),
-          );
-        }
+        // ✅ Allow current device to login
+        await userDoc.reference.update({'isLoggedIn': true});
+
+        await _session.saveSession(email, userDoc.id);
+        _session.attachListener(userDoc.id);
+
+        // 🔹 Save token now
+        await _saveFcmToken(userDoc.id);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                CustomerHomePage(userData: {...userData, 'docId': userDoc.id}),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Your account is not active")),

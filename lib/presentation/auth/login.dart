@@ -35,9 +35,15 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
 
     if (docId != null) {
       final docSnapshot = await authRef.doc(docId).get();
+
       if (docSnapshot.exists) {
         final userData = docSnapshot.data() as Map<String, dynamic>;
-        if (userData['active'] == true && userData['isLoggedIn'] == true) {
+
+        final bool active = userData['active'] ?? false;
+        final bool isLoggedIn = userData['isLoggedIn'] ?? false;
+
+        if (active && isLoggedIn) {
+          // ✅ attach listener only if valid
           _session.attachListener(docId);
           Navigator.pushReplacement(
             context,
@@ -47,8 +53,15 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
             ),
           );
         } else {
+          // 🚫 session expired -> logout
           await _session.clearSession();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const CustomerLoginPage()),
+          );
         }
+      } else {
+        await _session.clearSession();
       }
     }
   }

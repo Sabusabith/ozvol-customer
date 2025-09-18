@@ -139,7 +139,9 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               if (!snapshot.hasData)
                 return Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(color: kseccolor),
+                  child: Center(
+                    child: CircularProgressIndicator(color: kseccolor),
+                  ),
                 );
 
               final stocks = snapshot.data!.docs;

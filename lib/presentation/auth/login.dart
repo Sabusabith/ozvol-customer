@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:ozvol_customer/core/sessio_manager.dart';
 import 'package:ozvol_customer/utils/colors.dart';
 import 'package:ozvol_customer/presentation/home.dart';
+import 'package:uuid/uuid.dart';
 
 class CustomerLoginPage extends StatefulWidget {
   const CustomerLoginPage({super.key});
@@ -86,6 +87,7 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
   }
 
   /// 🔹 Login method
+
   /// 🔹 Login method
   void _login() async {
     setState(() => loading = true);
@@ -103,19 +105,17 @@ class _CustomerLoginPageState extends State<CustomerLoginPage> {
       final userData = userDoc.data() as Map<String, dynamic>;
 
       if (userData['active'] == true) {
-        // ✅ Force logout other sessions first
+        // ✅ Generate unique device ID for this login
+        final deviceId = const Uuid().v4();
+
+        // ✅ Update Firestore with this deviceId
         await userDoc.reference.update({
-          'isLoggedIn': false,
-          'fcmToken': FieldValue.delete(), // remove old device token
+          'isLoggedIn': true,
+          'currentDeviceId': deviceId,
         });
 
-        // Small delay to ensure old device listener triggers
-        await Future.delayed(const Duration(milliseconds: 300));
-
-        // ✅ Allow current device to login
-        await userDoc.reference.update({'isLoggedIn': true});
-
-        await _session.saveSession(email, userDoc.id);
+        // ✅ Save session with deviceId
+        await _session.saveSession(email, userDoc.id, deviceId);
         _session.attachListener(userDoc.id);
 
         // 🔹 Save token now
